@@ -78,8 +78,20 @@ lyrics = [
 ]
 
 # --- Step 3: Play Music and Show Lyrics ---
-if st.button("💖 Click to Make Your Day Beautiful 💖"):
-    # --- Embed Audio Player (Hidden) ---
+
+# Containers so we can replace the audio iframe and lyrics display without
+# leaving multiple audio elements playing at once.
+audio_container = st.empty()
+lyrics_placeholder = st.empty()
+
+# Track play count so "Replay" knows whether there's something to restart.
+if 'play_count' not in st.session_state:
+    st.session_state['play_count'] = 0
+
+def render_audio(container):
+    """Embed the hidden audio player into the given Streamlit container.
+    Replacing the content of the same container stops any previous audio iframe.
+    """
     audio_html = f"""
         <audio id="loveAudio" autoplay>
             <source src="{audio_source}" type="audio/mp3">
@@ -107,14 +119,34 @@ if st.button("💖 Click to Make Your Day Beautiful 💖"):
             }}, 200);
         </script>
     """
-    components.html(audio_html, height=0)
+    container.html(audio_html, height=0)
+
+def play_sequence():
+    # increment so replay is allowed after first play
+    st.session_state['play_count'] += 1
+    # render (or replace) the audio iframe
+    render_audio(audio_container)
 
     # --- Display Lyrics Synced ---
-    placeholder = st.empty()
+    lyrics_placeholder.empty()
     time.sleep(1.5)  # Give song time to start
 
     for line, delay in lyrics:
-        placeholder.markdown(f"<div class='lyrics'>{line}</div>", unsafe_allow_html=True)
+        lyrics_placeholder.markdown(f"<div class='lyrics'>{line}</div>", unsafe_allow_html=True)
         time.sleep(delay)
 
     st.success("💐 Hope your day starts with a smile 💐")
+
+# Two-button UI: Play and Replay. Replay restarts the audio and lyrics by
+# reusing the same audio container (so previous audio iframe is removed).
+col1, col2 = st.columns(2)
+play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
+replay_clicked = col2.button("🔁 Replay")
+
+if play_clicked:
+    play_sequence()
+elif replay_clicked:
+    if st.session_state.get('play_count', 0) > 0:
+        play_sequence()
+    else:
+        st.info("Press the Play button first to start the song, then use Replay.")
