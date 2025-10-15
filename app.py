@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import json
 import requests
 import base64
 import streamlit.components.v1 as components
@@ -16,9 +15,6 @@ st.set_page_config(
 # --- Light Theme + Aesthetic CSS ---
 st.markdown("""
     <style>
-    /* Try to load a decorative 'Venter' font (if available) via Google Fonts; if not, fall back */
-    @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
-
     :root {
         color-scheme: only light;
     }
@@ -35,17 +31,11 @@ st.markdown("""
         text-shadow: 1px 1px 3px #fff;
     }
     .lyrics {
-        /* Use 'Venter' if installed; otherwise use a decorative fallback from Google Fonts */
-        font-family: 'Venter', 'Varela Round', 'Poppins', sans-serif;
-        font-size: 32px;
-        font-style: italic;
-        color: #1e88e5; /* blue */
-        margin: 0;
-        text-shadow: 1px 1px 6px #fff;
-        transition: opacity 0.5s ease-in-out;
-        line-height: 1.2;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        font-size: 24px;
+        color: #6a1b9a;
+        margin-top: 30px;
+        text-shadow: 1px 1px 3px #fff;
+        transition: opacity 1s ease-in-out;
     }
     audio {
         display: none; /* Hide player controls */
@@ -72,20 +62,8 @@ with st.spinner("🎵 Loading your favorite part... please wait 💖"):
         st.stop()
 
 # --- Step 2: Show the Main Page After Buffering ---
-# Layout: title on the left, buttons on the right
-left_col, right_col = st.columns([3,1])
-
-with left_col:
-    st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
-    st.write("Click the button to start from your favorite part 🎶")
-
-with right_col:
-    # place the buttons vertically centered in the right column
-    st.write("\n")
-    st.write("\n")
-    st.write("\n")
-    play_clicked = st.button("💖 Click to Make Your Day Beautiful 💖")
-    replay_clicked = st.button("Replay")
+st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
+st.write("Click the button to start from your favorite part 🎶")
 
 lyrics = [
     ("Maybe it's 6:45 🌅", 3),
@@ -117,15 +95,12 @@ def render_audio(container):
     # Pass the lyrics array into the client-side script so the lyrics only start
     # when the audio actually begins playing (handles autoplay-blocked cases).
     # The lyrics will be displayed inside the same HTML container.
-    # Safely serialize lyrics for embedding in client-side JS
-    js_lyrics = json.dumps([{"text": line, "delay": delay} for line, delay in lyrics])
+    js_lyrics = '[' + ','.join([f'{{text: "{line}", delay: {delay}}}' for line, delay in lyrics]) + ']'
 
     audio_html = f"""
-        <div id="lyricsContainer" style="height:300px; display:flex; align-items:center; justify-content:center; margin-top:20px;">
-            <div style="text-align:center; width:100%;">
-                <div id="lyrics" class="lyrics" style="opacity:0; transform:translateY(0);"></div>
-                <div id="finishedMessage" style="margin-top:12px; font-size:20px; color:#4a148c;"></div>
-            </div>
+        <div id="lyricsContainer" style="margin-top:20px;">
+            <div id="lyrics" class="lyrics" style="opacity:0; transition: opacity 0.5s;"></div>
+            <div id="finishedMessage" style="margin-top:12px; font-size:18px; color:#4a148c;"></div>
         </div>
         <audio id="loveAudio" preload="auto">
             <source src="{audio_source}" type="audio/mp3">
@@ -198,14 +173,10 @@ def play_sequence():
 
 # Two-button UI: Play and Replay. Replay restarts the audio and lyrics by
 # reusing the same audio container (so previous audio iframe is removed).
-# If the buttons were already created in the right column above, use their
-# clicked values; otherwise fallback to the column layout used previously.
-try:
-    _ = play_clicked  # see if variable exists
-except NameError:
-    col1, col2 = st.columns(2)
-    play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
-    replay_clicked = col2.button("Replay")
+col1, col2 = st.columns(2)
+play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
+# separate plain-text Replay button as requested
+replay_clicked = col2.button("Replay")
 
 if play_clicked:
     play_sequence()
