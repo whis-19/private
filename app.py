@@ -1,19 +1,28 @@
 import streamlit as st
 import time
+import requests
 import base64
 import streamlit.components.v1 as components
 
 # --- Page Setup ---
-st.set_page_config(page_title="Morning Aimen 💖", page_icon="☀️", layout="centered")
+st.set_page_config(
+    page_title="Morning Aimen 💖",
+    page_icon="☀️",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# --- Custom CSS ---
+# --- Light Theme + Aesthetic CSS ---
 st.markdown("""
     <style>
-    body {
-        background: linear-gradient(135deg, #ffe6eb, #ffd1dc);
-        font-family: 'Poppins', sans-serif;
-        color: #6a1b9a;
-        text-align: center;
+    :root {
+        color-scheme: only light;
+    }
+    html, body, [class*="css"] {
+        background: linear-gradient(135deg, #ffe6eb, #ffd1dc) !important;
+        font-family: 'Poppins', sans-serif !important;
+        color: #6a1b9a !important;
+        text-align: center !important;
     }
     .title {
         font-size: 40px;
@@ -34,11 +43,28 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- UI ---
+# --- Step 1: Fetch and Buffer the Song ---
+github_audio_url = "https://raw.githubusercontent.com/whis-19/private/main/song.mp3"
+
+with st.spinner("🎵 Loading your favorite part... please wait 💖"):
+    try:
+        response = requests.get(github_audio_url)
+        if response.status_code == 200:
+            audio_bytes = response.content
+            b64 = base64.b64encode(audio_bytes).decode()
+            audio_source = f"data:audio/mp3;base64,{b64}"
+            time.sleep(1)  # small wait for effect
+        else:
+            st.error("❌ Could not load the song from GitHub.")
+            st.stop()
+    except Exception as e:
+        st.error(f"⚠️ Error loading song: {e}")
+        st.stop()
+
+# --- Step 2: Show the Main Page After Buffering ---
 st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
 st.write("Click the button to start from your favorite part 🎶")
 
-# --- Lyrics synced with 2:26 → 2:44 (18s window) ---
 lyrics = [
     ("Maybe it's 6:45 🌅", 3),
     ("Maybe I'm barely alive 💭", 2),
@@ -51,22 +77,17 @@ lyrics = [
     ("I need a girl like you, yeah 💞", 5)
 ]
 
-# --- Button ---
+# --- Step 3: Play Music and Show Lyrics ---
 if st.button("💖 Click to Make Your Day Beautiful 💖"):
-    # --- Load and Encode Music ---
-    with open("song.mp3", "rb") as f:
-        audio_bytes = f.read()
-        b64 = base64.b64encode(audio_bytes).decode()
-
-    # --- HTML/JS Component (with fade-out logic) ---
+    # --- Embed Audio Player (Hidden) ---
     audio_html = f"""
         <audio id="loveAudio" autoplay>
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            <source src="{audio_source}" type="audio/mp3">
         </audio>
         <script>
             const audio = document.getElementById('loveAudio');
             audio.volume = 1.0;
-            const fadeStart = 162;  // start fade at 2:42 (3s before stop)
+            const fadeStart = 162;  // start fade at 2:42
             const stopTime = 165;   // stop at 2:45
 
             audio.addEventListener('loadedmetadata', () => {{
@@ -76,14 +97,11 @@ if st.button("💖 Click to Make Your Day Beautiful 💖"):
 
             const checkInterval = setInterval(() => {{
                 if (audio.currentTime >= fadeStart && audio.currentTime < stopTime) {{
-                    // Gradually lower volume
                     const remaining = stopTime - audio.currentTime;
                     audio.volume = Math.max(0, remaining / 3);
                 }}
                 if (audio.currentTime >= stopTime) {{
                     audio.pause();
-                    audio.currentTime = stopTime;
-                    audio.volume = 1.0;
                     clearInterval(checkInterval);
                 }}
             }}, 200);
@@ -91,13 +109,12 @@ if st.button("💖 Click to Make Your Day Beautiful 💖"):
     """
     components.html(audio_html, height=0)
 
-    # --- Show Synced Lyrics ---
+    # --- Display Lyrics Synced ---
     placeholder = st.empty()
-    time.sleep(1.5)  # Small delay for music start
+    time.sleep(1.5)  # Give song time to start
 
     for line, delay in lyrics:
         placeholder.markdown(f"<div class='lyrics'>{line}</div>", unsafe_allow_html=True)
         time.sleep(delay)
 
     st.success("💐 Hope your day starts with a smile 💐")
-
