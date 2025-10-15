@@ -31,11 +31,13 @@ st.markdown("""
         text-shadow: 1px 1px 3px #fff;
     }
     .lyrics {
-        font-size: 24px;
+        font-size: 48px;
         color: #6a1b9a;
-        margin-top: 30px;
-        text-shadow: 1px 1px 3px #fff;
-        transition: opacity 1s ease-in-out;
+        margin: 0;
+        text-shadow: 1px 1px 6px #fff;
+        transition: opacity 0.5s ease-in-out;
+        line-height: 1.2;
+        font-weight: 600;
     }
     audio {
         display: none; /* Hide player controls */
@@ -98,9 +100,11 @@ def render_audio(container):
     js_lyrics = '[' + ','.join([f'{{text: "{line}", delay: {delay}}}' for line, delay in lyrics]) + ']'
 
     audio_html = f"""
-        <div id="lyricsContainer" style="margin-top:20px;">
-            <div id="lyrics" class="lyrics" style="opacity:0; transition: opacity 0.5s;"></div>
-            <div id="finishedMessage" style="margin-top:12px; font-size:18px; color:#4a148c;"></div>
+        <div id="lyricsContainer" style="height:300px; display:flex; align-items:center; justify-content:center; margin-top:20px;">
+            <div style="text-align:center; width:100%;">
+                <div id="lyrics" class="lyrics" style="opacity:0; transform:translateY(0);"></div>
+                <div id="finishedMessage" style="margin-top:12px; font-size:20px; color:#4a148c;"></div>
+            </div>
         </div>
         <audio id="loveAudio" preload="auto">
             <source src="{audio_source}" type="audio/mp3">
