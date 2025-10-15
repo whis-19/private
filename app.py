@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import json
 import requests
 import base64
 import streamlit.components.v1 as components
@@ -38,7 +39,7 @@ st.markdown("""
         font-family: 'Venter', 'Varela Round', 'Poppins', sans-serif;
         font-size: 32px;
         font-style: italic;
-        color: #6a1b9a;
+        color: #1e88e5; /* blue */
         margin: 0;
         text-shadow: 1px 1px 6px #fff;
         transition: opacity 0.5s ease-in-out;
@@ -71,8 +72,20 @@ with st.spinner("🎵 Loading your favorite part... please wait 💖"):
         st.stop()
 
 # --- Step 2: Show the Main Page After Buffering ---
-st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
-st.write("Click the button to start from your favorite part 🎶")
+# Layout: title on the left, buttons on the right
+left_col, right_col = st.columns([3,1])
+
+with left_col:
+    st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
+    st.write("Click the button to start from your favorite part 🎶")
+
+with right_col:
+    # place the buttons vertically centered in the right column
+    st.write("\n")
+    st.write("\n")
+    st.write("\n")
+    play_clicked = st.button("💖 Click to Make Your Day Beautiful 💖")
+    replay_clicked = st.button("Replay")
 
 lyrics = [
     ("Maybe it's 6:45 🌅", 3),
@@ -104,7 +117,8 @@ def render_audio(container):
     # Pass the lyrics array into the client-side script so the lyrics only start
     # when the audio actually begins playing (handles autoplay-blocked cases).
     # The lyrics will be displayed inside the same HTML container.
-    js_lyrics = '[' + ','.join([f'{{text: "{line}", delay: {delay}}}' for line, delay in lyrics]) + ']'
+    # Safely serialize lyrics for embedding in client-side JS
+    js_lyrics = json.dumps([{"text": line, "delay": delay} for line, delay in lyrics])
 
     audio_html = f"""
         <div id="lyricsContainer" style="height:300px; display:flex; align-items:center; justify-content:center; margin-top:20px;">
@@ -184,10 +198,14 @@ def play_sequence():
 
 # Two-button UI: Play and Replay. Replay restarts the audio and lyrics by
 # reusing the same audio container (so previous audio iframe is removed).
-col1, col2 = st.columns(2)
-play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
-# separate plain-text Replay button as requested
-replay_clicked = col2.button("Replay")
+# If the buttons were already created in the right column above, use their
+# clicked values; otherwise fallback to the column layout used previously.
+try:
+    _ = play_clicked  # see if variable exists
+except NameError:
+    col1, col2 = st.columns(2)
+    play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
+    replay_clicked = col2.button("Replay")
 
 if play_clicked:
     play_sequence()
