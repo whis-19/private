@@ -4,7 +4,7 @@ import base64
 import streamlit.components.v1 as components
 
 # --- Page Setup ---
-st.set_page_config(page_title="Morning Love 💖", page_icon="☀️", layout="centered")
+st.set_page_config(page_title="Morning Aimen 💖", page_icon="☀️", layout="centered")
 
 # --- Custom CSS ---
 st.markdown("""
@@ -35,7 +35,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- UI ---
-st.markdown("<div class='title'>☀️ Good Morning, Beautiful 💕</div>", unsafe_allow_html=True)
+st.markdown("<div class='title'>☀️ Good Morning, Beautiful ladiez 💕</div>", unsafe_allow_html=True)
 st.write("Click the button to start from your favorite part 🎶")
 
 # --- Lyrics synced with 2:26 → 2:44 (18s window) ---
