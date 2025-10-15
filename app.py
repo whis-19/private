@@ -15,6 +15,9 @@ st.set_page_config(
 # --- Light Theme + Aesthetic CSS ---
 st.markdown("""
     <style>
+    /* Try to load a decorative 'Venter' font (if available) via Google Fonts; if not, fall back */
+    @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+
     :root {
         color-scheme: only light;
     }
@@ -31,13 +34,17 @@ st.markdown("""
         text-shadow: 1px 1px 3px #fff;
     }
     .lyrics {
-        font-size: 48px;
+        /* Use 'Venter' if installed; otherwise use a decorative fallback from Google Fonts */
+        font-family: 'Venter', 'Varela Round', 'Poppins', sans-serif;
+        font-size: 32px;
+        font-style: italic;
         color: #6a1b9a;
         margin: 0;
         text-shadow: 1px 1px 6px #fff;
         transition: opacity 0.5s ease-in-out;
         line-height: 1.2;
         font-weight: 600;
+        letter-spacing: 0.5px;
     }
     audio {
         display: none; /* Hide player controls */
