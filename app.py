@@ -155,10 +155,13 @@ def render_audio(container):
             audio.play().catch(() => {{ /* autoplay blocked; waiting for user interaction */ }});
         </script>
     """
-    # Use components.html to render the HTML/JS. Use a fixed key so the
-    # component is replaced/updated on reruns instead of creating multiple
-    # overlapping audio elements.
-    components.html(audio_html, height=150, scrolling=False, key="love_audio")
+    # Clear the given container and render the HTML inside it. Using a
+    # placeholder (returned by container.empty()) and a with-block ensures
+    # the component is inserted into the same location and replaces any
+    # previous audio element, avoiding overlaps.
+    placeholder = container.empty()
+    with placeholder:
+        components.html(audio_html, height=150, scrolling=False)
 
 def play_sequence():
     # increment so replay is allowed after first play
