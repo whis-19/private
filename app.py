@@ -92,21 +92,53 @@ def render_audio(container):
     """Embed the hidden audio player into the given Streamlit container.
     Replacing the content of the same container stops any previous audio iframe.
     """
+    # Pass the lyrics array into the client-side script so the lyrics only start
+    # when the audio actually begins playing (handles autoplay-blocked cases).
+    # The lyrics will be displayed inside the same HTML container.
+    js_lyrics = '[' + ','.join([f'{{text: "{line}", delay: {delay}}}' for line, delay in lyrics]) + ']'
+
     audio_html = f"""
-        <audio id="loveAudio" autoplay>
+        <div id="lyricsContainer" style="margin-top:20px;">
+            <div id="lyrics" class="lyrics" style="opacity:0; transition: opacity 0.5s;"></div>
+            <div id="finishedMessage" style="margin-top:12px; font-size:18px; color:#4a148c;"></div>
+        </div>
+        <audio id="loveAudio" preload="auto">
             <source src="{audio_source}" type="audio/mp3">
         </audio>
         <script>
             const audio = document.getElementById('loveAudio');
+            const lyricsEl = document.getElementById('lyrics');
+            const finishedEl = document.getElementById('finishedMessage');
             audio.volume = 1.0;
             const fadeStart = 162;  // start fade at 2:42
             const stopTime = 165;   // stop at 2:45
+            const startAt = 146;    // start at 2:26
+            const lyrics = {js_lyrics};
+
+            // Reset UI
+            lyricsEl.innerHTML = '';
+            lyricsEl.style.opacity = 0;
+            finishedEl.innerHTML = '';
 
             audio.addEventListener('loadedmetadata', () => {{
-                audio.currentTime = 146; // Start at 2:26
-                audio.play();
+                try {{ audio.currentTime = startAt; }} catch(e) {{ /* ignore */ }}
             }});
 
+            // Only start the lyric timeline once the audio is actually playing.
+            audio.addEventListener('playing', async () => {{
+                // small delay to match previous behavior
+                await new Promise(r => setTimeout(r, 1500));
+
+                for (const item of lyrics) {{
+                    lyricsEl.innerHTML = item.text;
+                    lyricsEl.style.opacity = 1;
+                    await new Promise(r => setTimeout(r, item.delay * 1000));
+                }}
+
+                finishedEl.innerHTML = '💐 Hope your day starts with a smile 💐';
+            }});
+
+            // Fade out and stop near the end (same logic as before)
             const checkInterval = setInterval(() => {{
                 if (audio.currentTime >= fadeStart && audio.currentTime < stopTime) {{
                     const remaining = stopTime - audio.currentTime;
@@ -117,31 +149,28 @@ def render_audio(container):
                     clearInterval(checkInterval);
                 }}
             }}, 200);
+
+            // Try to play immediately; if browser blocks autoplay, lyrics won't start
+            // because the 'playing' event never fires until user interaction.
+            audio.play().catch(() => {{ /* autoplay blocked; waiting for user interaction */ }});
         </script>
     """
-    container.html(audio_html, height=0)
+    container.html(audio_html, height=150)
 
 def play_sequence():
     # increment so replay is allowed after first play
     st.session_state['play_count'] += 1
     # render (or replace) the audio iframe
     render_audio(audio_container)
-
-    # --- Display Lyrics Synced ---
+    # Clear any previous server-side lyrics UI (client-side will handle lyrics)
     lyrics_placeholder.empty()
-    time.sleep(1.5)  # Give song time to start
-
-    for line, delay in lyrics:
-        lyrics_placeholder.markdown(f"<div class='lyrics'>{line}</div>", unsafe_allow_html=True)
-        time.sleep(delay)
-
-    st.success("💐 Hope your day starts with a smile 💐")
 
 # Two-button UI: Play and Replay. Replay restarts the audio and lyrics by
 # reusing the same audio container (so previous audio iframe is removed).
 col1, col2 = st.columns(2)
 play_clicked = col1.button("💖 Click to Make Your Day Beautiful 💖")
-replay_clicked = col2.button("🔁 Replay")
+# separate plain-text Replay button as requested
+replay_clicked = col2.button("Replay")
 
 if play_clicked:
     play_sequence()
